@@ -1,6 +1,4 @@
-
-# s2i-openresty-centos7
-FROM openshift/base-centos7
+FROM registry.access.redhat.com/ubi7/ubi
 
 ARG OPENRESTY_RPM_VERSION="1.15.8.1"
 ARG LUAROCKS_VERSION="2.3.0"
@@ -11,25 +9,31 @@ LABEL io.k8s.description="Platform for building openresty" \
       io.openshift.tags="builder,s2i,openresty,luarocks,gateway"
 
 WORKDIR /tmp
+COPY centos.repo /etc/yum.repos.d/centos.repo
 
 RUN yum clean all -y \
- && yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo \
- && yum install -y epel-release \
- && yum upgrade -y \
- && yum install -y \
-        perl-Test-Nginx perl-TAP-Harness-JUnit \
-        perl-local-lib perl-App-cpanminus \
-        dnsmasq \
-        libyaml-devel \
- && yum install -y \
-        openresty-${OPENRESTY_RPM_VERSION} \
-        openresty-resty-${OPENRESTY_RPM_VERSION} \
-        openresty-debug-${OPENRESTY_RPM_VERSION} \
-        openresty-openssl \
-    && echo "Cleaning all dependencies" \
-    &&  yum clean all -y \
-    && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
-    && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
+  && yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo \
+  && yum upgrade -y  \
+  && yum install -y  \
+    wget git \
+    gcc gcc-c++ make \
+    pcre-devel openssl-devel\
+  && wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+  && rpm -ivh epel-release-latest-7.noarch.rpm \
+  && yum install -y \
+      perl-Test-Nginx perl-TAP-Harness-JUnit \
+      perl-local-lib perl-App-cpanminus \
+      dnsmasq \
+      libyaml-devel \
+   && yum install -y \
+      openresty-${OPENRESTY_RPM_VERSION} \
+      openresty-resty-${OPENRESTY_RPM_VERSION} \
+      openresty-debug-${OPENRESTY_RPM_VERSION} \
+      openresty-openssl \
+  && echo "Cleaning all dependencies" \
+  &&  yum clean all -y \
+  && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
+  && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
 
 # TODO (optional): Copy the builder files into /opt/app
 # COPY ./<builder_folder>/ /opt/app/
